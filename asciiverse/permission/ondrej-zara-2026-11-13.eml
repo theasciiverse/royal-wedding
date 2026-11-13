@@ -1,0 +1,240 @@
+Delivered-To: sandquist@gmail.com
+Received: by 2002:a05:7301:3f16:b0:376:4c7d:b73c with SMTP id oc22csp10621dyb;
+        Fri, 13 Nov 2026 10:51:40 -0800 (PST)
+X-Received: by 2002:a05:690e:118e:b0:67c:b7a:634a with SMTP id 956f58d0204a3-67d8974206emr1623963d50.133.1794595899944;
+        Fri, 13 Nov 2026 10:51:39 -0800 (PST)
+ARC-Seal: i=2; a=rsa-sha256; t=1794595899; cv=pass;
+        d=google.com; s=arc-20260327;
+        b=SFlHnUPe/ugLXpGbOuuqJTRppyqhiyE6P9O9arQPqrHuYXA5WIyza2RDdwNkyaq6I1
+         QqUAneYMTs8DRci6uswCRPbNmbI3p6YKNR4bS+vlCUsiaaj/x0XhQA66tdlgWhw6Xncx
+         mQQiCIFN0E2zDm31zynKoTCjRV9oMHCVQfgTJN/LOkP73Gk3OwPt+0hrjjmhvRWpSRc3
+         LmM2o4f5D9fbS00Z0N+Dx9dlQnc5ny5G1AsjOFABtvijOHr1dyuB/C7WHMeS2iIezyY8
+         RDt083TCSAutfTDI8ha/Z7B2x9kcjhEbKEtjkrMt2rA2jqnLke0+tbWPFP0cYDeQUAby
+         RJjQ==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=7NBEXVW8LI9ivSMnhYmOcg9BVnDdh09m4Ket3Y2CYik=;
+        fh=aCSTMmPm6nq2ggIkpTIfL2LgEpbbtXfB0shasFulweQ=;
+        b=rfgs9YYyz1BrW5lN/FUcbi5odRnaJ92a7iW0DDwll84v93+NoLgDNq2vnZ3kKJrIQ6
+         wylXW3Gcl5XQCj4Sz9HLfvA557oYdXEqfBDKBX5Xx7uqy6rhJGmMHr6N7ektqmvyQxtr
+         /6Yg8qQxWaOX5lGHIxYaFQskbUdLswu7G3PXiEIrTy3nwXvWKhaSliSQEWxis7aSQR37
+         AIYxtMYRuVGFrn3MI7Z9+T2RMKIwNELAwiHIsAMgS7J6U2RLVl+TnG3+N0LZeXKEa3WI
+         RWXOyskZg6zXsp7jytYCxf2/zVdo96QchQx8QgoJHHRoScn8PlrhaWYdNApfB/Lqqg7Q
+         a4wg==;
+        dara=google.com
+ARC-Authentication-Results: i=2; mx.google.com;
+       dkim=pass header.i=@gmail.com header.s=20260707 header.b=0L1RSshF;
+       arc=pass (i=1);
+       spf=pass (google.com: domain of ondrej.zara@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ondrej.zara@gmail.com;
+       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;
+       dara=pass header.i=@gmail.com
+Return-Path: <ondrej.zara@gmail.com>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id 956f58d0204a3-67d8a6263b2sor2564170d50.7.2026.11.13.10.51.39
+        for <sandquist@gmail.com>
+        (Google Transport Security);
+        Fri, 13 Nov 2026 10:51:39 -0800 (PST)
+Received-SPF: pass (google.com: domain of ondrej.zara@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@gmail.com header.s=20260707 header.b=0L1RSshF;
+       arc=pass (i=1);
+       spf=pass (google.com: domain of ondrej.zara@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ondrej.zara@gmail.com;
+       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;
+       dara=pass header.i=@gmail.com
+ARC-Seal: i=1; a=rsa-sha256; t=1794595899; cv=none;
+        d=google.com; s=arc-20260327;
+        b=LtTiGF4kKfdMFI5D5WZcyTIY0EEvO1sykPpT+s3wXQikviGMNX2aJcy7eOMYWxr6Z8
+         CBTCc8PvIL9CmENAZ/UvNZoEVeVQtNCEsq225WPU3YWDa4OLVAMgLSYlWCZaIZ9irMM7
+         YMjcOWsszT9gydzFtsw/E+33eK5eeVSE+9vI8KJZ8EdUhweBZi0QFXcU+bM0sGPf0mqV
+         TVV+HPKivHd34lswquOHcPCs4GYodI+KDoRc/FkUZU9KHsccUwTpg+t+ZL9AifqRnjlD
+         hM0nuuGDaMzpa+KmKCQvs1a6viLSuie+2rL+xqIchnFZMWUPAugHZrHKxtmZmdYw08g9
+         H2SQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=7NBEXVW8LI9ivSMnhYmOcg9BVnDdh09m4Ket3Y2CYik=;
+        fh=aCSTMmPm6nq2ggIkpTIfL2LgEpbbtXfB0shasFulweQ=;
+        b=JMsX9+8sKq62cp9z0X2MyFTAWs2EkDYgSGLcp/7FEjkAMV31mebeJMCko4gR45ZywC
+         XDBtydJTuGdicMTuzIniGgMA38bFWtuMc8C5r6DYKG5nTX9+WHSRZ+V0nLsh9b97FknR
+         2VX7Sx5uQuQOcHB9AVNq7OFSrDTd1zVijwDwpiJLzGRqriZbAOrbiw43myZ7ZNs199qi
+         Nw3LIKlFM2WDSKrrwZ8zWAa0F0BytltLb89EIok1pPUikzWqRtlHdnnzLDoGsFuu5TKi
+         Ffjyxs0cmNU8t0bJplkhEhuFP3nlnQecCAbeNdaQZFYQHdIHq+hkqKkdbRTTFE1sjJET
+         F3+w==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794595899; x=1795200699; dara=google.com;
+        h=content-type:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=7NBEXVW8LI9ivSMnhYmOcg9BVnDdh09m4Ket3Y2CYik=;
+        b=0L1RSshFDMB1f3rwQXRiT5YN614GJ20XxdmszjDvqlfzM2U4mtCYGIaRIeL4UMjaRM
+         nBIkslKKsfQp5zz/+fu5pXaEEf2Co+mrHgGeMexNTFAyC/8FkoiX9yz9W/rJTFtKRptR
+         WDfF2di892WeGEy4MQns+1UTwowgJW4XVOEcubyky9eCHBoyQWUoIUSBQ2eUnbngjSJD
+         wLFhiLVSeRwS+mcT4MN0VVlAyte/RijUDkkOvlQscZ/KKASWGr20Vopr5Wjx+NtaZ2BY
+         gEmh2Cz64giWUzuDTQSJZSIIJ6AW/GRzj9+bLc4HHwE0RcE856ABhruzqK1SltHqS0v+
+         P5ew==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794595899; x=1795200699;
+        h=content-type:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=7NBEXVW8LI9ivSMnhYmOcg9BVnDdh09m4Ket3Y2CYik=;
+        b=DeveRcj/62uSwS4O9zeZ2c8nE9i0a1liSOeZy9WCTM5UR+nHkGbKJugkSs30HOm2vU
+         +9YHzzwXBkuVlwKbkLlVXKgqMmOQUyDz+5N+scKe511q3X2QmI3CvJGokBkbEduD2Srp
+         zGuH0Zdbu6Wfh8qfHyXzWtqAQ6qvs2vMinSvYBKqQa/R/ByO8uJZl1fhBX7vLzi2PQOS
+         9b59zuhhYc6qRxc3389Z7idcrtJZrGsB0NF1Wp9o8zk6mtmK6gbpr8tTUQds7fyhawEM
+         n4AlKWzi+3Bc0S6KzHjCNU1YjZAcsQ26gXBPsB9N8zDwi5hI8J7D/tO34hB01/DJwf0h
+         9MNQ==
+X-Gm-Message-State: APuU4Z9qUxMhvvYkMuUP0ukKLqIgidN/MvYUbQ4Q/H4kWWvsVohH8fkb
+	X2taixcTqFtRpybsE8u74MdwWVxO4IXW8syjomGCQ2/rkIFQseRcQVWu9I0Mk7RnxhNZ/wvsDzH
+	lV5xUWOHrzpfKiFKxGQL15FVCN48ECzk11bTL
+X-Gm-Gg: AYBFou03MvbzBB7uj2ZIYf+nspDmUcHeozPDum3XhH/2gOXjbEdr6pa9niECy3k3cs3
+	263tNuLsJ77eZ3eTNAXtBssLadlC4FpRSCbIpf9eLdOT/CAc4ALfMUfBZ08yHnYoVxUd7cUkOdP
+	kjYmiik5C50fB+1qeBxngPXGHUHKpqOK9AEd1ICB4i7HcubCVYN7i2gjxy8zArcNs/TCOTUcoai
+	Hr8lYf1MFZGe5AaUQHqWBEY7AY4Cz74Jh0665UjXvdqc23ylj2eK/ffqaCxM/jz/wVNfkKy7NQ1
+	9fr3bmmCTghtrKxotUfvuwc5Anai93sWSimoMejl40Z5YSa4RtimKjByrZ0OOWQbnwncWuFAWoE
+	ONDXwiGD6tKXIxmj819/qZK2dASWEORCIe/2ZIa/uC11wT2VK94EYBm1Ie2QkHev3wSYL
+X-Received: by 2002:a05:690e:150b:b0:67c:332f:3fdc with SMTP id
+ 956f58d0204a3-67d8967f928mr1518385d50.82.1794595899411; Fri, 13 Nov 2026
+ 10:51:39 -0800 (PST)
+MIME-Version: 1.0
+References: <CAH-vmYJLu3ZQ9Xb_wJm1q2Ds3Gym-0e53HMFJb5_dS0-E4_EkQ@mail.gmail.com>
+In-Reply-To: <CAH-vmYJLu3ZQ9Xb_wJm1q2Ds3Gym-0e53HMFJb5_dS0-E4_EkQ@mail.gmail.com>
+From: =?UTF-8?B?T25kxZllaiDFvcOhcmE=?= <ondrej.zara@gmail.com>
+Date: Fri, 13 Nov 2026 19:51:28 +0100
+X-Gm-Features: AclHuK8so9Y_YTUWg-3g7VmYw6UhyRRyk34D1F_dJzkzLqeBGCdfb_y_LlhaVUU
+Message-ID: <CAAgCJPZaZkJyfoE8vZH12DLSLAPmciZ4N2SAPN15RE+AcPY_CA@mail.gmail.com>
+Subject: Re: Your 7DRL games in Asciiverse, a free terminal games catalog
+To: David Sandquist <sandquist@gmail.com>
+Content-Type: multipart/alternative; boundary="0000000000001990c406602cebc8"
+
+--0000000000001990c406602cebc8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi David,
+
+thanks for your e-mail. Your Asciiverse projects looks really neat! You
+have my full permission and consent to use my games for this purpose. Note,
+however, that some of the games are not strictly grid-based: while they
+have a tty-like look, they often leverage HTML-based UI elements or
+non-rectangular layout (The Conception, for instance, draws hexagonal
+cells).
+I might eventually add the proper licensing (MIT sounds like a solid
+choice), but for now, please use this e-mail as a proof of my compliance.
+
+
+Sincerely,
+Ondrej Zara
+
+
+
+p=C3=A1 13. 11. 2026 v 17:16 odes=C3=ADlatel David Sandquist <sandquist@gma=
+il.com>
+napsal:
+
+> Hi Ond=C5=99ej,
+>
+> Thank you for rot.js, and for more than a decade of 7DRL games. A good
+> share of the web's roguelikes stand on your toolkit, and your own games a=
+re
+> some of the nicest of them.
+>
+> I run Asciiverse (https://asciiverse.sh), a free catalog and launcher for
+> terminal games, which opened this month. A small client, av, shows each
+> game's recorded preview, then installs and starts it in whatever terminal
+> you already have, on Linux, macOS and Windows. It's open source, with no
+> accounts and everything free. The catalog holds 296 titles so far, from
+> Hunt the Wumpus and Rogue to NetHack and games made this year, each
+> credited to its authors with its licence kept.
+>
+> I would love to bring some of your games to the terminal. They are alread=
+y
+> drawn as character grids, so they belong there naturally. Warden's Duty,
+> Rogue Zombies and The Great Train Robbery carry licences, so those can go
+> ahead as they are. These have none in their repositories:
+>
+> - The Royal Wedding
+> - Sleeping Beauty
+> - Goldfish
+> - Caf=C3=A9 Havoc
+> - The Conception
+> - Rogue Sea
+> - The Curse of the General Sibling Combinator
+>
+> Would you be willing to add a licence to them, MIT as on your newer games=
+,
+> or simply give us permission to convert them? Your name, your game and it=
+s
+> credits would stay up front, and the terminal versions would be open sour=
+ce
+> like the rest of the catalog.
+>
+> If you would rather some of them stay as they are, that is of course fine=
+;
+> I would just like to ask before touching any of them.
+>
+> Best regards,
+> David
+> Asciiverse
+> Asciiverse
+>
+
+--0000000000001990c406602cebc8
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi David,</div><div><br></div><div>thanks for your e-=
+mail. Your Asciiverse projects looks really neat! You have my full permissi=
+on and consent to use=C2=A0my games for this purpose. Note, however, that=
+=C2=A0some of the games are not strictly grid-based: while they have a tty-=
+like look, they often leverage HTML-based UI elements or non-rectangular la=
+yout (The Conception, for instance, draws hexagonal cells).</div><div>I mig=
+ht eventually add the proper licensing (MIT sounds like a solid choice), bu=
+t for now, please use this e-mail as a proof of my compliance.</div><div><b=
+r></div><div><br></div><div>Sincerely,</div><div>Ondrej Zara</div><div><br>=
+</div><div><br></div></div><br><div class=3D"gmail_quote gmail_quote_contai=
+ner"><div dir=3D"ltr" class=3D"gmail_attr">p=C3=A1 13. 11. 2026 v=C2=A017:1=
+6 odes=C3=ADlatel David Sandquist &lt;<a href=3D"mailto:sandquist@gmail.com=
+">sandquist@gmail.com</a>&gt; napsal:<br></div><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,2=
+04);padding-left:1ex"><div dir=3D"ltr"><div dir=3D"ltr">Hi Ond=C5=99ej,<br>=
+<br>Thank you for rot.js, and for more than a decade of 7DRL games. A good =
+share of the web&#39;s roguelikes stand on your toolkit, and your own games=
+ are some of the nicest of them.<br><br>I run Asciiverse (<a href=3D"https:=
+//asciiverse.sh" target=3D"_blank">https://asciiverse.sh</a>), a free catal=
+og and launcher for terminal games, which opened this month. A small client=
+, av, shows each game&#39;s recorded preview, then installs and starts it i=
+n whatever terminal you already have, on Linux, macOS and Windows. It&#39;s=
+ open source, with no accounts and everything free. The catalog holds 296 t=
+itles so far, from Hunt the Wumpus and Rogue to NetHack and games made this=
+ year, each credited to its authors with its licence kept.<br><br>I would l=
+ove to bring some of your games to the terminal. They are already drawn as =
+character grids, so they belong there naturally. Warden&#39;s Duty, Rogue Z=
+ombies and The Great Train Robbery carry licences, so those can go ahead as=
+ they are. These have none in their repositories:<br><br>- The Royal Weddin=
+g<br>- Sleeping Beauty<br>- Goldfish<br>- Caf=C3=A9 Havoc<br>- The Concepti=
+on<br>- Rogue Sea<br>- The Curse of the General Sibling Combinator<br><br>W=
+ould you be willing to add a licence to them, MIT as on your newer games, o=
+r simply give us permission to convert them? Your name, your game and its c=
+redits would stay up front, and the terminal versions would be open source =
+like the rest of the catalog.<br><br>If you would rather some of them stay =
+as they are, that is of course fine; I would just like to ask before touchi=
+ng any of them.<br><br>Best regards,<br>David<br>Asciiverse<br style=3D"col=
+or:rgb(34,34,34);font-family:Arial,Helvetica,sans-serif;font-size:small;fon=
+t-style:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-=
+weight:400;letter-spacing:normal;text-align:start;text-indent:0px;text-tran=
+sform:none;word-spacing:0px;white-space:normal;background-color:rgb(255,255=
+,255);text-decoration-style:initial;text-decoration-color:initial"><span st=
+yle=3D"color:rgb(34,34,34);font-family:Arial,Helvetica,sans-serif;font-size=
+:small;font-style:normal;font-variant-ligatures:normal;font-variant-caps:no=
+rmal;font-weight:400;letter-spacing:normal;text-align:start;text-indent:0px=
+;text-transform:none;word-spacing:0px;white-space:normal;background-color:r=
+gb(255,255,255);text-decoration-style:initial;text-decoration-color:initial=
+;display:inline;float:none">Asciiverse</span></div>
+</div>
+</blockquote></div>
+
+--0000000000001990c406602cebc8--

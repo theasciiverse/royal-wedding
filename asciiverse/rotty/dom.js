@@ -53,6 +53,8 @@ DOM.Text = function (text) {
     this.data = text;
     this.parentNode = null;
 };
+DOM.Text.prototype.remove = function () { if (this.parentNode) this.parentNode.removeChild(this); };
+Object.defineProperty(DOM.Text.prototype, "parentElement", { get: function () { return this.parentNode; } });
 Object.defineProperty(DOM.Text.prototype, "textContent", {
     get: function () { return this.data; },
     set: function (v) { this.data = String(v); DOM.touch(); }
@@ -88,6 +90,16 @@ DOM.Element = function (tag) {
 
 DOM.touch = function () { DOM.dirty = true; };
 
+// an inline style="color: #f33; display: none" into the element's style
+DOM.parseStyle = function (text, style) {
+    String(text).split(";").forEach(function (decl) {
+        var i = decl.indexOf(":");
+        if (i < 0) return;
+        var k = decl.slice(0, i).trim().toLowerCase().replace(/-([a-z])/g, function (m, c) { return c.toUpperCase(); });
+        if (k) style[k] = decl.slice(i + 1).trim();
+    });
+};
+
 (function (P) {
     P.appendChild = function (n) {
         if (n.nodeType == 11) { var kids = n.childNodes.slice(); for (var i = 0; i < kids.length; i++) this.appendChild(kids[i]); return n; }
@@ -119,6 +131,7 @@ DOM.touch = function () { DOM.dirty = true; };
         var c = document.createElement(this.tagName);
         c.className = this.className; c.id = this.id;
         for (var a in this.attributes) c.attributes[a] = this.attributes[a];
+        if (c.attributes.style) DOM.parseStyle(c.attributes.style, c.style);
         if (deep) c.innerHTML = this.innerHTML;
         return c;
     };
@@ -126,6 +139,7 @@ DOM.touch = function () { DOM.dirty = true; };
         v = String(v);
         if (k == "class") this.className = v;
         else if (k == "id") this.id = v;
+        else if (k == "style") DOM.parseStyle(v, this.style);
         this.attributes[k] = v;
         DOM.touch();
     };
@@ -152,6 +166,11 @@ DOM.touch = function () { DOM.dirty = true; };
     Object.defineProperty(P, "firstChild", { get: function () { return this.childNodes[0] || null; } });
     Object.defineProperty(P, "lastChild", { get: function () { return this.childNodes[this.childNodes.length - 1] || null; } });
     Object.defineProperty(P, "firstElementChild", { get: function () { return this.children[0] || null; } });
+    Object.defineProperty(P, "lastElementChild", { get: function () { var c = this.children; return c[c.length - 1] || null; } });
+    Object.defineProperty(P, "childElementCount", { get: function () { return this.children.length; } });
+    Object.defineProperty(P, "parentElement", { get: function () { var p = this.parentNode; return p && p.nodeType == 1 ? p : null; } });
+    Object.defineProperty(P, "nextElementSibling", { get: function () { var p = this.parentNode; if (!p) return null; var c = p.children; return c[c.indexOf(this) + 1] || null; } });
+    Object.defineProperty(P, "previousElementSibling", { get: function () { var p = this.parentNode; if (!p) return null; var c = p.children; return c[c.indexOf(this) - 1] || null; } });
     Object.defineProperty(P, "nextSibling", { get: function () { var p = this.parentNode; if (!p) return null; return p.childNodes[p.childNodes.indexOf(this) + 1] || null; } });
     Object.defineProperty(P, "previousSibling", { get: function () { var p = this.parentNode; if (!p) return null; return p.childNodes[p.childNodes.indexOf(this) - 1] || null; } });
     Object.defineProperty(P, "textContent", {
@@ -189,13 +208,16 @@ DOM.Fragment.prototype = Object.create(DOM.Element.prototype);
 // ------------------------------------------------------------ html parsing
 
 DOM.VOID = { br: 1, img: 1, hr: 1, input: 1, meta: 1, link: 1, wbr: 1 };
-DOM.ENT = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " ", ndash: "-", mdash: "-", hellip: "...", times: "x", copy: "(c)", laquo: "«", raquo: "»", middot: "·", bull: "•", larr: "←", rarr: "→", uarr: "↑", darr: "↓", hearts: "♥" };
+DOM.ENT = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " ", ndash: "-", mdash: "-", hellip: "...", times: "x", copy: "(c)", laquo: "«", raquo: "»", middot: "·", bull: "•", larr: "←", rarr: "→", uarr: "↑", darr: "↓", hearts: "♥", minus: "-",
+    eacute: "é", aacute: "á", iacute: "í", oacute: "ó", uacute: "ú", scaron: "š", ccaron: "č", rcaron: "ř", zcaron: "ž", deg: "°", frac12: "½", euro: "€", pound: "£", trade: "(tm)", reg: "(R)" };
 DOM.entities = function (s) {
     return s.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, function (m, e) {
         if (e[0] == "#") return String.fromCodePoint(e[1] == "x" || e[1] == "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10));
         return e.toLowerCase() in DOM.ENT ? DOM.ENT[e.toLowerCase()] : m;
     });
 };
+DOM.CLOSES_P = { p: 1, div: 1, ul: 1, ol: 1, table: 1, pre: 1, h1: 1, h2: 1, h3: 1, h4: 1, h5: 1, h6: 1, section: 1, blockquote: 1, hr: 1, dl: 1 };
+DOM.SELF_CLOSE = { li: 1, p: 1, tr: 1, td: 1, th: 1, option: 1, dt: 1, dd: 1 };
 DOM.parse = function (html, parent) {
     var stack = [parent], re = /<!--[\s\S]*?-->|<\/?([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^\s=>\/]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*)\s*(\/?)>|[^<]+|</g, m;
     while ((m = re.exec(html))) {
@@ -207,6 +229,9 @@ DOM.parse = function (html, parent) {
                 for (var i = stack.length - 1; i > 0; i--) if (stack[i].tagName.toLowerCase() == tag) { stack.length = i; break; }
                 continue;
             }
+            // as in a browser, a block closes an open <p>, an <li> the open <li>
+            var open = stack[stack.length - 1].tagName && stack[stack.length - 1].tagName.toLowerCase();
+            if (stack.length > 1 && ((open == "p" && DOM.CLOSES_P[tag]) || (open == tag && DOM.SELF_CLOSE[tag]))) { stack.pop(); top = stack[stack.length - 1]; }
             var el = document.createElement(tag), ar = /([^\s=>\/]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?/g, a;
             while ((a = ar.exec(m[2] || ""))) {
                 var v = a[2] === undefined ? "" : a[2].replace(/^["']|["']$/g, "");
@@ -245,15 +270,21 @@ DOM.matches = function (el, part) {
     return true;
 };
 // descendants of root matching a selector; as in a browser, the parts before
-// the last may match any ancestor, root and above included
+// the last may match any ancestor, root and above included. Parts are joined
+// by a space (any ancestor) or ">" (the parent)
 DOM.query = function (root, sel, first) {
     var out = [];
-    var groups = sel.split(",").map(function (one) { return one.trim().split(/\s+/); });
-    var fits = function (el, parts) {
-        if (!DOM.matches(el, parts[parts.length - 1])) return false;
-        var i = parts.length - 2, a = el.parentNode;
-        while (i >= 0 && a) { if (DOM.matches(a, parts[i])) i--; a = a.parentNode; }
-        return i < 0;
+    var groups = sel.split(",").map(function (one) {
+        return one.replace(/\s*>\s*/g, " > ").trim().split(/\s+/);
+    });
+    // does el match parts[0..i], parts[i] being el's own part?
+    var fits = function (el, parts, i) {
+        if (i === undefined) i = parts.length - 1;
+        if (!el || !DOM.matches(el, parts[i])) return false;
+        if (i == 0) return true;
+        if (parts[i - 1] == ">") return fits(el.parentNode, parts, i - 2);
+        for (var a = el.parentNode; a; a = a.parentNode) if (fits(a, parts, i - 1)) return true;
+        return false;
     };
     var walk = function (n) {
         for (var i = 0; i < n.childNodes.length; i++) {
@@ -280,12 +311,14 @@ DOM.Canvas = function () {
     this.cols = 0; this.rows = 0;
     this.ch = []; this.fg = []; this.bg = [];
     this.cursor = null;
+    this.ops = [];   // what was drawn with fillText and strokeRect, in pixels
     this._ctx = null;
     this._w = 0; this._h = 0;
 };
 DOM.Canvas.prototype = Object.create(DOM.Element.prototype);
-Object.defineProperty(DOM.Canvas.prototype, "width", { get: function () { return this._w; }, set: function (v) { this._w = v | 0; } });
-Object.defineProperty(DOM.Canvas.prototype, "height", { get: function () { return this._h; }, set: function (v) { this._h = v | 0; } });
+// setting the size clears a canvas, as in a browser
+Object.defineProperty(DOM.Canvas.prototype, "width", { get: function () { return this._w; }, set: function (v) { this._w = v | 0; this.ops = []; DOM.touch(); } });
+Object.defineProperty(DOM.Canvas.prototype, "height", { get: function () { return this._h; }, set: function (v) { this._h = v | 0; this.ops = []; DOM.touch(); } });
 DOM.Canvas.prototype.resizeCells = function (cols, rows, bg) {
     this.cols = cols; this.rows = rows;
     this._w = cols; this._h = rows;
@@ -315,12 +348,24 @@ DOM.Canvas.prototype.getContext = function () {
         textAlign: "center", textBaseline: "middle", globalAlpha: 1, lineWidth: 1,
         measureText: function (t) { return { width: String(t).length * 100 / 100 * (parseFloat(this.font) || 15) * 0.6 }; },
         fillRect: function (x, y, w, h) {
-            if (x <= 0 && y <= 0 && w >= canvas._w && h >= canvas._h) canvas.fill(this.fillStyle);
+            if (x <= 0 && y <= 0 && w >= canvas._w && h >= canvas._h) { canvas.fill(this.fillStyle); canvas.ops = []; }
+            else canvas.ops.push({ op: "fillRect", x: x, y: y, w: w, h: h, color: this.fillStyle, alpha: this.globalAlpha });
         },
         clearRect: function (x, y, w, h) {
-            if (x <= 0 && y <= 0 && w >= canvas._w && h >= canvas._h) canvas.fill(null);
+            if (x <= 0 && y <= 0 && w >= canvas._w && h >= canvas._h) { canvas.fill(null); canvas.ops = []; }
         },
-        fillText: function () {}, strokeText: function () {}, drawImage: function () {},
+        // a game that draws text on a canvas of its own: the calls are kept
+        // for its layout to place in cells
+        fillText: function (t, x, y) {
+            if (canvas.ops.length > 20000) canvas.ops.splice(0, 10000);
+            canvas.ops.push({ op: "fillText", text: String(t), x: x, y: y, color: this.fillStyle, font: this.font, alpha: this.globalAlpha });
+            DOM.touch();
+        },
+        strokeRect: function (x, y, w, h) {
+            canvas.ops.push({ op: "strokeRect", x: x, y: y, w: w, h: h, color: this.strokeStyle, alpha: this.globalAlpha });
+            DOM.touch();
+        },
+        strokeText: function () {}, drawImage: function () {},
         beginPath: function () {}, closePath: function () {}, moveTo: function () {}, lineTo: function () {},
         arc: function () {}, fill: function () {}, stroke: function () {}, rect: function () {},
         save: function () {}, restore: function () {}, translate: function () {}, scale: function () {},
@@ -444,7 +489,7 @@ DOM.setupWindow = function () {
     g.requestAnimationFrame = function (f) { return AV_timers.setTimeout(function () { f(Date.now()); }, 16); };
     g.cancelAnimationFrame = AV_timers.clear;
     g.console = AV_console;
-    g.alert = function (t) { AV.write("alert: " + t); };
+    g.alert = function (t) { AV.write("alert: " + t); if (GAME.alert) GAME.alert(String(t)); };
     g.confirm = function () { return true; };
     g.prompt = function () { return null; };
     g.open = function () { return null; };

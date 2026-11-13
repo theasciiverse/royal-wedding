@@ -48,29 +48,56 @@ MAIN.saveSoon = function () {
     MAIN.saveTimer = os.setTimeout(function () { MAIN.saveTimer = null; MAIN.writeStorage(); }, 500);
 };
 
-// rot.js draws its cells through a backend onto a canvas; here every
-// rectangular backend writes straight into the canvas's cell grid, one
-// cell per character, and sizes are counted in cells
+// rot.js draws its cells through a backend onto a canvas; here the
+// backends write straight into the canvas's cell grid, and sizes are
+// counted in cells.
+// - rect: one cell per character
+// - hex: rot.js's hex grid uses doubled columns (a cell at x, y has x + y
+//   even, its neighbours in the row are at x - 2 and x + 2), so each hex is
+//   two terminal cells wide, the character in the first and the background
+//   over both, and odd rows sit one cell to the right: offset rows, the way
+//   the browser draws them. The canvas is width + 1 cells wide
+MAIN.canvasOf = function (backend) { return (backend._context || backend._ctx).canvas; };
+MAIN.cellChar = function (ch) {
+    if (Array.isArray(ch)) { var l = ch.filter(function (x) { return x && x != " "; }); ch = l.length ? l[l.length - 1] : " "; }
+    return ch;
+};
 MAIN.patchRot = function () {
-    if (typeof ROT == "undefined" || !ROT.Display) return;
+    if (typeof ROT == "undefined" || !ROT.Display || ROT.Display.__rotty) return;
+    ROT.Display.__rotty = true;
     var R = ROT.Display.Rect && ROT.Display.Rect.prototype;
     if (R) {
         R.compute = function (o) {
             this._options = o;
             this._spacingX = 1; this._spacingY = 1;
             this._canvasWidth = o.width; this._canvasHeight = o.height;
-            var c = this._context.canvas;
+            var c = MAIN.canvasOf(this);
             if (c.cols != o.width || c.rows != o.height) c.resizeCells(o.width, o.height, o.bg);
         };
         R.draw = function (data, clearBefore) {
-            var ch = data[2];
-            if (Array.isArray(ch)) { var l = ch.filter(function (x) { return x && x != " "; }); ch = l.length ? l[l.length - 1] : " "; }
-            this._context.canvas.put(data[0], data[1], ch, data[3], data[4]);
+            MAIN.canvasOf(this).put(data[0], data[1], MAIN.cellChar(data[2]), data[3], data[4]);
         };
         R.computeSize = function (w, h) { return [Math.max(1, Math.floor(w)), Math.max(1, Math.floor(h))]; };
         R.computeFontSize = function () { return 15; };
         if (R._drawWithCache) R._drawWithCache = R.draw;
         if (R._drawNoCache) R._drawNoCache = R.draw;
+    }
+    var H = ROT.Display.Hex && ROT.Display.Hex.prototype;
+    if (H) {
+        H.compute = function (o) {
+            this._options = o;
+            this._spacingX = 1; this._spacingY = 1; this._hexSize = 1;
+            var w = o.width + 1, h = o.height, c = MAIN.canvasOf(this);
+            if (c.cols != w || c.rows != h) c.resizeCells(w, h, o.bg);
+        };
+        H.draw = function (data, clearBefore) {
+            var c = MAIN.canvasOf(this), x = data[0], y = data[1];
+            c.put(x, y, MAIN.cellChar(data[2]), data[3], data[4]);
+            c.put(x + 1, y, " ", data[3], data[4]);
+        };
+        H.computeSize = function (w, h) { return [Math.max(1, Math.floor(w) - 1), Math.max(1, Math.floor(h))]; };
+        H.computeFontSize = function () { return 15; };
+        if (H._fill) H._fill = function () {};
     }
     if (GAME.patchRot) GAME.patchRot();
 };
@@ -108,7 +135,15 @@ MAIN.utf8 = function (bytes, n) {
     return s;
 };
 
+// A frame is drawn when the page or a canvas changed, and otherwise a few
+// times a second for what moves by itself (blinking, fading; GAME.idleMs,
+// 100 ms by default), so a game waiting for a key costs next to nothing
+MAIN.lastFrame = 0;
 MAIN.frame = function () {
+    var now = Date.now();
+    if (!DOM.dirty && now - MAIN.lastFrame < (GAME.idleMs || 100)) return;
+    DOM.dirty = false;
+    MAIN.lastFrame = now;
     TERM.clear();
     if (GAME.layout) GAME.layout();
     else MAIN.defaultLayout();
@@ -205,6 +240,7 @@ MAIN.run = function () {
     if (s0) { TERM.w = s0[0]; TERM.h = s0[1]; }
     DOM.setupWindow();
     document.body.innerHTML = GAME.body || "";
+    globalThis.__rottyPatch = MAIN.patchRot;
     if (GAME.before) GAME.before();
     try {
         std.evalScript(GAME.source);
@@ -222,6 +258,8 @@ MAIN.run = function () {
         document.readyState = "complete";
         document.dispatchEvent(new DOM.Event("readystatechange"));
         window.dispatchEvent(new DOM.Event("load"));
+        // <body onload="...">, which a browser runs as the window's load handler
+        if (GAME.bodyAttrs && GAME.bodyAttrs.onload) AV_guard(function () { std.evalScript(GAME.bodyAttrs.onload); })();
         if (GAME.loaded) GAME.loaded();
     }), 0);
 };

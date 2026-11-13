@@ -102,15 +102,18 @@ TERM.sgr = function (c) {
     return "\x1b[0;" + (c.bold ? "1;" : "") + (c.ul ? "4;" : "") + "38;2;" + c.fg[0] + ";" + c.fg[1] + ";" + c.fg[2] +
         ";48;2;" + c.bg[0] + ";" + c.bg[1] + ";" + c.bg[2] + "m";
 };
+// what each cell last showed, kept as numbers so comparing costs little
+TERM.rgb = function (c) { return (c[0] << 16) | (c[1] << 8) | c[2]; };
 TERM.flush = function () {
     var out = [], last = null, at = -1;
     var n = TERM.w * TERM.h;
-    if (!TERM.prev || TERM.prev.length != n) { TERM.prev = new Array(n).fill(""); }
+    if (!TERM.prev || TERM.prev.n != n) TERM.prev = { n: n, ch: new Array(n).fill(null), fg: new Int32Array(n), bg: new Int32Array(n), fl: new Int8Array(n) };
+    var P = TERM.prev;
     for (var i = 0; i < n; i++) {
         var c = TERM.cells[i];
-        var key = c.ch + "\x00" + c.fg + "\x00" + c.bg + "\x00" + c.ul + c.bold;
-        if (TERM.prev[i] === key) continue;
-        TERM.prev[i] = key;
+        var fg = TERM.rgb(c.fg), bg = TERM.rgb(c.bg), fl = (c.ul ? 1 : 0) | (c.bold ? 2 : 0);
+        if (P.ch[i] === c.ch && P.fg[i] === fg && P.bg[i] === bg && P.fl[i] === fl) continue;
+        P.ch[i] = c.ch; P.fg[i] = fg; P.bg[i] = bg; P.fl[i] = fl;
         var x = i % TERM.w, y = (i / TERM.w) | 0;
         // every non-ASCII character re-positions the cursor after it, so a
         // terminal that draws one wider or narrower never shifts the row

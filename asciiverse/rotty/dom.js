@@ -6,10 +6,23 @@ var DOM = {};
 
 DOM.listen = function (target) {
     target._listeners = {};
-    target.addEventListener = function (type, l) {
+    // options: once, and signal (an AbortController's) to remove it
+    target.addEventListener = function (type, l, opts) {
         if (!l) return;
-        var list = this._listeners[type] || (this._listeners[type] = []);
-        if (list.indexOf(l) == -1) list.push(l);
+        var self = this, list = this._listeners[type] || (this._listeners[type] = []);
+        if (list.indexOf(l) != -1) return;
+        if (opts && typeof opts == "object") {
+            if (opts.signal && opts.signal.aborted) return;
+            if (opts.once) {
+                var orig = l;
+                l = function (e) { self.removeEventListener(type, l); return typeof orig == "function" ? orig.call(this, e) : orig.handleEvent(e); };
+            }
+            if (opts.signal && opts.signal.addEventListener) {
+                var added = l;
+                opts.signal.addEventListener("abort", function () { self.removeEventListener(type, added); });
+            }
+        }
+        list.push(l);
     };
     target.removeEventListener = function (type, l) {
         var list = this._listeners[type];
@@ -65,12 +78,14 @@ Object.defineProperty(DOM.Text.prototype, "nodeValue", {
 });
 
 DOM.Element = function (tag) {
+    // a custom element's class calls this through super(), with no tag
+    if (tag === undefined && new.target && new.target.__rottyTag) tag = new.target.__rottyTag;
     this.nodeType = 1;
     this.tagName = this.nodeName = String(tag).toUpperCase();
     this.childNodes = [];
     this.parentNode = null;
     this.attributes = {};
-    this.style = {};
+    this.style = DOM.Style ? new DOM.Style() : {};
     this.dataset = {};
     var self = this;
     this.classList = {
@@ -140,6 +155,7 @@ DOM.parseStyle = function (text, style) {
         if (k == "class") this.className = v;
         else if (k == "id") this.id = v;
         else if (k == "style") DOM.parseStyle(v, this.style);
+        else if (k.startsWith("data-")) this.dataset[k.slice(5).replace(/-([a-z])/g, function (m, c) { return c.toUpperCase(); })] = v;
         this.attributes[k] = v;
         DOM.touch();
     };
@@ -208,7 +224,7 @@ DOM.Fragment.prototype = Object.create(DOM.Element.prototype);
 // ------------------------------------------------------------ html parsing
 
 DOM.VOID = { br: 1, img: 1, hr: 1, input: 1, meta: 1, link: 1, wbr: 1 };
-DOM.ENT = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " ", ndash: "-", mdash: "-", hellip: "...", times: "x", copy: "(c)", laquo: "«", raquo: "»", middot: "·", bull: "•", larr: "←", rarr: "→", uarr: "↑", darr: "↓", hearts: "♥", minus: "-",
+DOM.ENT = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " ", ndash: "-", mdash: "-", hellip: "...", times: "x", copy: "(c)", laquo: "«", raquo: "»", middot: "·", bull: "•", larr: "←", rarr: "→", uarr: "↑", darr: "↓", hearts: "♥", minus: "-", plus: "+", equals: "=", colon: ":", lpar: "(", rpar: ")", excl: "!", quest: "?", num: "#", dollar: "$", percnt: "%", ast: "*", comma: ",", period: ".", sol: "/",
     eacute: "é", aacute: "á", iacute: "í", oacute: "ó", uacute: "ú", scaron: "š", ccaron: "č", rcaron: "ř", zcaron: "ž", deg: "°", frac12: "½", euro: "€", pound: "£", trade: "(tm)", reg: "(R)" };
 DOM.entities = function (s) {
     return s.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, function (m, e) {
@@ -226,7 +242,7 @@ DOM.parse = function (html, parent) {
         if (m[1]) {
             var tag = m[1].toLowerCase();
             if (s[1] == "/") {
-                for (var i = stack.length - 1; i > 0; i--) if (stack[i].tagName.toLowerCase() == tag) { stack.length = i; break; }
+                for (var i = stack.length - 1; i > 0; i--) if ((stack[i]._closeTag || stack[i].tagName.toLowerCase()) == tag) { stack.length = i; break; }
                 continue;
             }
             // as in a browser, a block closes an open <p>, an <li> the open <li>
@@ -238,6 +254,7 @@ DOM.parse = function (html, parent) {
                 el.setAttribute(a[1].toLowerCase(), DOM.entities(v));
             }
             top.appendChild(el);
+            if (tag == "template") { el.content = new DOM.Fragment(); el.content._closeTag = "template"; stack.push(el.content); continue; }
             if (!m[3] && !DOM.VOID[tag]) stack.push(el);
         } else {
             top.appendChild(new DOM.Text(DOM.entities(s)));
@@ -258,14 +275,27 @@ DOM.serialize = function (n) {
 
 DOM.matches = function (el, part) {
     if (el.nodeType != 1) return false;
-    var m = /^([a-zA-Z0-9*]*)((?:[#.][\w-]+)*)$/.exec(part);
+    // tag, #id, .class and [attr], [attr=value] in any order after the tag
+    var m = /^([a-zA-Z0-9*-]*)((?:[#.][\w-]+|\[[^\]]+\])*)$/.exec(part);
     if (!m) return false;
     if (m[1] && m[1] != "*" && el.tagName.toLowerCase() != m[1].toLowerCase()) return false;
-    var rest = m[2].match(/[#.][\w-]+/g) || [];
+    var rest = m[2].match(/[#.][\w-]+|\[[^\]]+\]/g) || [];
     for (var i = 0; i < rest.length; i++) {
         var r = rest[i];
         if (r[0] == "#" && el.id != r.slice(1)) return false;
         if (r[0] == "." && !el.classList.contains(r.slice(1))) return false;
+        if (r[0] == "[") {
+            var am = /^\[\s*([\w-]+)\s*(?:([~^$*|]?=)\s*["']?([^"'\]]*)["']?)?\s*\]$/.exec(r);
+            if (!am) return false;
+            var v = el.getAttribute(am[1]);
+            if (v === null) return false;
+            var want = am[3], op = am[2];
+            if (op == "=" && v != want) return false;
+            if (op == "~=" && v.split(/\s+/).indexOf(want) < 0) return false;
+            if (op == "^=" && !v.startsWith(want)) return false;
+            if (op == "$=" && !v.endsWith(want)) return false;
+            if (op == "*=" && v.indexOf(want) < 0) return false;
+        }
     }
     return true;
 };
@@ -339,7 +369,9 @@ DOM.Canvas.prototype.fill = function (bg) {
     for (var i = 0; i < this.ch.length; i++) { this.ch[i] = " "; this.bg[i] = bg; this.fg[i] = null; }
     DOM.touch();
 };
-DOM.Canvas.prototype.getContext = function () {
+DOM.Canvas.prototype.getContext = function (type) {
+    // WebGL is the game layout's to provide, if it can stand in for one
+    if (type && /webgl/.test(type)) return GAME.webgl ? GAME.webgl(this, type) : null;
     if (this._ctx) return this._ctx;
     var canvas = this;
     this._ctx = {
@@ -392,7 +424,10 @@ document.title = "";
 document.hidden = false;
 document.visibilityState = "visible";
 document.cookie = "";
-document.fonts = { ready: { then: function (f) { setTimeout(f, 0); return this; } }, load: function () { return { then: function (f) { setTimeout(f, 0); } }; } };
+// the page's web fonts: all loaded at once, the terminal has its own
+document.fonts = { status: "loaded", size: 0, forEach: function () {}, add: function () {}, delete: function () {},
+    check: function () { return true; }, load: function () { return Promise.resolve([]); }, addEventListener: function () {} };
+document.fonts.ready = Promise.resolve(document.fonts);
 document.createElement = function (tag) {
     return String(tag).toLowerCase() == "canvas" ? new DOM.Canvas() : new DOM.Element(tag);
 };
@@ -504,4 +539,5 @@ DOM.setupWindow = function () {
     Object.defineProperty(g, "outerWidth", { get: function () { return TERM.w; }, configurable: true });
     Object.defineProperty(g, "outerHeight", { get: function () { return TERM.h; }, configurable: true });
     screen.width = TERM.w; screen.height = TERM.h;
+    if (DOM.setupWeb) DOM.setupWeb(g);
 };

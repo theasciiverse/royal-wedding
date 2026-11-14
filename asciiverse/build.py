@@ -11,7 +11,7 @@ import json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-RUNTIME = ["prelude.js", "dom.js", "term.js", "panel.js", "main.js"]
+RUNTIME = ["prelude.js", "dom.js", "web.js", "term.js", "panel.js", "main.js"]
 
 
 def main():
@@ -25,6 +25,7 @@ def main():
     inline = [m for m in re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, re.I | re.S)]
     source = []
     for src in scripts:
+        src = src.split("?")[0]
         source.append("// " + src + "\n" + (ROOT / src).read_text(encoding="utf-8"))
     source.extend(conf.get("inline", inline))
     bm = re.search(r"<body([^>]*)>(.*)</body>", html, re.I | re.S)
@@ -33,7 +34,8 @@ def main():
     body = re.sub(r"<script.*?</script>", "", body, flags=re.I | re.S)
     files = {f: (ROOT / f).read_text(encoding="utf-8") for f in conf.get("files", [])}
 
-    parts = [(ROOT / "asciiverse" / "rotty" / f).read_text(encoding="utf-8") for f in RUNTIME]
+    parts = [(ROOT / "asciiverse" / "rotty" / f).read_text(encoding="utf-8") for f in RUNTIME
+             if (ROOT / "asciiverse" / "rotty" / f).exists()]
     parts.append(game)
     parts.append("GAME.version = %s;" % json.dumps(version))
     # after each script rot.js's display is patched as soon as it exists, so

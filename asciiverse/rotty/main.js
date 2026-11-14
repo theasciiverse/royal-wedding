@@ -142,6 +142,7 @@ MAIN.lastFrame = 0;
 MAIN.frame = function () {
     var now = Date.now();
     if (!DOM.dirty && now - MAIN.lastFrame < (GAME.idleMs || 100)) return;
+    if (GAME.frameMs && now - MAIN.lastFrame < GAME.frameMs) return;
     DOM.dirty = false;
     MAIN.lastFrame = now;
     TERM.clear();

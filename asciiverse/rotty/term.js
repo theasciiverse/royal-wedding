@@ -140,6 +140,12 @@ TERM.CODES = {
     "/": 191, "?": 191, "`": 192, "~": 192, "[": 219, "{": 219, "\\": 220, "|": 220, "]": 221, "}": 221,
     "'": 222, "\"": 222
 };
+// the browser's KeyboardEvent.code for the other keys of a US layout
+TERM.PUNCT = { " ": "Space", ".": "Period", ">": "Period", ",": "Comma", "<": "Comma", "/": "Slash", "?": "Slash",
+    "-": "Minus", "_": "Minus", "=": "Equal", "+": "Equal", ";": "Semicolon", ":": "Semicolon", "'": "Quote", "\"": "Quote",
+    "[": "BracketLeft", "{": "BracketLeft", "]": "BracketRight", "}": "BracketRight", "\\": "Backslash", "|": "Backslash",
+    "`": "Backquote", "~": "Backquote", ")": "Digit0", "!": "Digit1", "@": "Digit2", "#": "Digit3", "$": "Digit4", "%": "Digit5",
+    "^": "Digit6", "&": "Digit7", "*": "Digit8", "(": "Digit9" };
 TERM.SHIFTED = ")!@#$%^&*(:+<_>?~{|}\"";
 TERM.NUMPAD = { "1": 97, "2": 98, "3": 99, "4": 100, "5": 101, "6": 102, "7": 103, "8": 104, "9": 105 };
 TERM.NAMES = { 8: "Backspace", 9: "Tab", 13: "Enter", 27: "Escape", 33: "PageUp", 34: "PageDown", 35: "End", 36: "Home",
@@ -155,7 +161,7 @@ TERM.key = function (ch, code, mods) {
         else {
             keyCode = TERM.CODES[ch] || ch.toUpperCase().charCodeAt(0);
             if (TERM.SHIFTED.indexOf(ch) != -1) shift = true;
-            codeName = ch >= "0" && ch <= "9" ? "Digit" + ch : "";
+            codeName = ch >= "0" && ch <= "9" ? "Digit" + ch : (TERM.PUNCT[ch] || "");
             if (GAME.digitsAsNumpad && TERM.NUMPAD[ch] && !mods.ctrl) { keyCode = TERM.NUMPAD[ch]; codeName = "Numpad" + ch; }
         }
         key = ch;
@@ -183,7 +189,8 @@ TERM.key = function (ch, code, mods) {
         return !e.defaultPrevented;
     };
     var go = fire("keydown", {});
-    if (go && charCode && !mods.alt) fire("keypress", { charCode: charCode, keyCode: charCode, which: charCode });
+    if (go && charCode && !mods.alt) go = fire("keypress", { charCode: charCode, keyCode: charCode, which: charCode });
+    if (go && DOM.typeInto && !mods.ctrl && !mods.alt) DOM.typeInto(target, base, charCode);
     fire("keyup", {});
     DOM.touch();
 };

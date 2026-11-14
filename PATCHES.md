@@ -25,7 +25,9 @@ around you under it. rotty, the runtime written for Ondřej's rot.js games
   page's load event, the frame loop, saving; `term.js`: truecolor cells,
   keys turned into the browser's events with rot.js's keyCodes;
   `panel.js`: HTML text drawn into a box of the screen, words wrapped;
-  `prelude.js`: timers and a console that writes to the log).
+  `prelude.js`: timers and a console that writes to the log; `web.js`:
+  the newer parts of the browser for Ondřej's later games, the same in
+  every game on rotty).
 - `asciiverse/game.js`: the page laid out on the screen as in the browser.
   The invitation is index.html's own `#intro`, centred, with its colours
   (blank rows of the scroll left out when the terminal is short). Then the

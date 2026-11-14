@@ -32,6 +32,7 @@ PANEL.lines = function (el, w, base) {
             return;
         }
         if (n.nodeType != 1 && n.nodeType != 11) return;
+        if (n.attributes && "hidden" in n.attributes) return;
         if (n.style && (n.style.display == "none" || n.style.visibility == "hidden" || n.style.opacity === 0 || n.style.opacity === "0")) return;
         var css = GAME.css ? GAME.css(n) || {} : {};
         if (css.hidden) return;
